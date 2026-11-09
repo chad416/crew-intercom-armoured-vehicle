@@ -1,6 +1,6 @@
 # Progress notes (resume from here after an interruption)
 
-Status 9 Nov 2026, about 22:15: **Rev A complete, local git only (not pushed).**
+Status 10 Nov 2026: **Rev B complete and public** (github.com/chad416/crew-intercom-armoured-vehicle). Hardware-only items: OPEN_ITEMS.md.
 
 ## Done
 
@@ -19,12 +19,8 @@ Status 9 Nov 2026, about 22:15: **Rev A complete, local git only (not pushed).**
 
 ## Open
 
-- Publish on GitHub: needs the user's OK.
 - CV and email draft for the target company: each needs the user's go (kept outside this repo).
-- The CCU is not built. Possible next steps:
-  - analog sidetone through the codec bypass;
-  - a bypass self-test in MAINT (FMEA rows 8–9);
-  - measure the line width of real track tones (DOSSIER §15).
+- Everything else needs hardware: see OPEN_ITEMS.md.
 
 ## Gotchas
 

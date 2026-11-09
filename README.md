@@ -56,15 +56,16 @@ It is a portfolio and thesis-preparation project, not a product, and not certifi
 
 | Check | Result |
 |---|---|
-| Host unit tests (`fw/scripts/test-host.sh`) | 1284 checks; **100 % lines (500), branches (274), MC/DC condition outcomes (274)**, GCC 14 |
+| Host unit tests (`fw/scripts/test-host.sh`) | 1370 checks, including a 4-box + CCU system test on real frames; **100 % lines (663), branches (372), MC/DC condition outcomes (372)**, GCC 14 |
 | MISRA C:2012 (`fw/scripts/misra.sh`, cppcheck addon) | no findings outside deviation D1 ([fw/docs/misra.md](fw/docs/misra.md)) |
-| Traceability (`fw/tools/trace.py`) | 34/34 requirements of [fw/SRS.md](fw/SRS.md) traced to existing tests |
-| Renode IT01–IT08 (`fw/scripts/test-sim.sh`) | 8/8 pass |
+| Traceability (`fw/tools/trace.py`, `tools/trace_sys.py`) | 47/47 software requirements of [fw/SRS.md](fw/SRS.md) traced to existing tests; 14/14 system requirements with evidence and a status ([docs/sys_traceability.md](docs/sys_traceability.md)) |
+| Renode IT01–IT10 (`fw/scripts/test-sim.sh`) | 10/10 pass |
 | IT02 CCU loss to bypass | BYPASS 20.3 ms after the last frame |
 | IT03 recovery | NORMAL 2000 ms after the link is good; 0 transitions at 50 % frame loss |
 | IT06 wrong ANR calibration | guard trips after 599 ms; output held at the clamp |
 | IT08 processor stall | relay drops after 1.4–2.1 ms |
-| Defect found by the tests | IT04: lost frames were counted twice. Fixed; see [fw/SRS.md](fw/SRS.md) revision history |
+| Emergency-path self-test (IT09, IT10) | healthy path passes; a dead path is found and the box runs DEGRADED |
+| Defects found by the tests | IT04: lost frames were counted twice. The host system test showed that two downlinks in one tick keep only the newer command (decision D11). Fixed or recorded; see [fw/SRS.md](fw/SRS.md) |
 
 ## Layout
 
@@ -76,10 +77,11 @@ It is a portfolio and thesis-preparation project, not a product, and not certifi
 | `model/icsim/` | `sti.py` (IEC 60268-16 indirect + STIPA direct), `chain.py` (speech chain, dose), `anr.py` (FxLMS, prediction bound), `budget.py`, `rma.py`, `data.py` (sourced inputs) |
 | `model/studies/` | S1 chain, S2 ANR, S3 STI validation, S4 latency, S5 AoA, S6 RMA, S7 power |
 | `results/` | JSON results and the FMEA table |
-| `fw/lib/icom/` | crew-box core library, pure C99: `frame.c`, `link.c`, `modes.c`, `mix.c`, `anr.c`, `box.c` |
+| `fw/lib/icom/` | core library, pure C99. Crew box: `frame.c`, `link.c`, `modes.c`, `mix.c`, `anr.c`, `bypass.c` (emergency-path self-test), `box.c`. CCU core: `ccu.c` (supervision, mix-minus, radio priority, rebroadcast) |
 | `fw/app/` | Zephyr application for `mimxrt1064_evk` (test image: acoustic plant and fault hooks) |
 | `fw/sim/` | Renode platform, and `rig.py` (CCU emulator, relay model) |
-| `fw/tests/` | host unit tests and Robot Framework tests IT01–IT08 |
+| `fw/tests/` | host unit tests, the 4-box + CCU system test, and Robot Framework tests IT01–IT10 |
+| `OPEN_ITEMS.md` | what only hardware, a laboratory or a user can close |
 
 ## Quick start
 
@@ -120,7 +122,8 @@ All limits are detailed in DOSSIER §14.
   plant model.
 - **The bus is a UART at simulator speed.**
 - **Cycle counts are Renode's virtual time.**
-- **The CCU is not built.**
+- **The CCU exists as tested core logic only.** Its radio interfaces and hardware are not built.
+- **Hardware-only items** are listed in [OPEN_ITEMS.md](OPEN_ITEMS.md).
 - **Not certified.** The software process is DO-178C *style* only.
 
 ## Licence

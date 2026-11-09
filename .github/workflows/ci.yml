@@ -44,8 +44,10 @@ jobs:
         run: bash fw/scripts/test-host.sh
       - name: MISRA C:2012 (documented deviations only)
         run: bash fw/scripts/misra.sh
-      - name: Requirement traceability
-        run: python3 fw/tools/trace.py
+      - name: Requirement traceability (software and system level)
+        run: |
+          python3 fw/tools/trace.py
+          python3 tools/trace_sys.py
 
   # Firmware: build the test image for the RT1064 and run the Renode integration tests.
   firmware:

@@ -1,10 +1,10 @@
 # Digital crew intercom for an armoured vehicle: engineering dossier
 
-Rev A, 9 Nov 2026. Portfolio and thesis-preparation work; not a product, not certified.
+Rev B, 10 Nov 2026 (Rev A 9 Nov: see the revision history at the end). Portfolio and thesis-preparation work; not a product, not certified.
 
 This dossier follows the systems-engineering spine of Wasson, *System Engineering Analysis, Design, and
 Development*, 2nd ed. (Wiley, 2016) [W]. Each section names the chapter and pages it applies. Every
-engineering number carries a reference key [Rn] (list in §16) and a status:
+engineering number carries a reference key [Rn] (list in §17) and a status:
 - **V**: read in the source.
 - **G**: read off a published graph, ±2 dB.
 - **D**: derived from V/G values by a stated method.
@@ -63,6 +63,7 @@ intercom stay fail-operational when a crew box, the bus or the central unit fail
    - At 50 % BIT coverage of internal crew-box faults it rises to 183 per 10^6.
    - The crew-box firmware drops to the bypass 20 ms after the last bus frame, or within about 2 ms (1 tick + the
      relay hold time) if the processor stalls. Both are measured in Renode (§13.3).
+   - The emergency path itself is self-tested at standstill (Rev B). It used to be a latent failure.
 5. **Architecture.** In the weighted analysis of alternatives, the digital star with CCU mixing and an
    analog bypass (A2) scores 7.47 and TSN with distributed mixing (A3) scores 7.38. A2 wins 68 % of
    20 000 random weightings, and no ±10 % single-weight change flips the result (S5, §8).
@@ -229,7 +230,7 @@ separately, not as footnotes:
 
 **Crew-box transition table** (W Table 7.1 format, p. 158, with the time constraint of Fig. 7.6; exit
 criteria of the current state, W Author's Note 7.4, p. 159). It is implemented in
-`fw/lib/icom/src/modes.c` and tested in `fw/tests/unit/test_modes.c` and in Renode IT01–IT08.
+`fw/lib/icom/src/modes.c` and tested in `fw/tests/unit/test_modes.c` and in Renode IT01–IT10.
 
 | Current | Event | Trigger (criteria) | Next | Time limit | Req. |
 |---|---|---|---|---|---|
@@ -261,7 +262,11 @@ and sees zero transitions.
 - REBROADCAST connects radio 1 receive to radio 2 transmit and the reverse, with the commander
   monitoring. It is a CCU routing state; the crew box needs no change because it receives channels with
   activity flags.
-- The CCU itself is outside the firmware built here (§14).
+- The CCU core is built: `fw/lib/icom/src/ccu.c`, requirements CCU-01 … CCU-08.
+  - In REBROADCAST, a radio that no crew member keys retransmits the other radio's receive audio while that
+    radio's squelch is open. A crew member keying the radio overrides it.
+  - The commander's box has priority on every radio.
+  - These behaviours are tested in `test_ccu.c` and, with four crew boxes on real frames, in `test_system.c`.
 
 ## 5. Requirements (W ch. 19–22, pp. 397–464)
 
@@ -408,7 +413,7 @@ requirement (CB-02).**
 
 **MIL-STD-1472G 5.3.1.6 j** asks for sidetone "in phase". A digital path cannot be truly in phase. The
 5.4 ms digital sidetone meets the human-factors limit, but the clean solution is the codec's analog
-microphone-to-headphone bypass. This is recorded as an open design decision (§15).
+microphone-to-headphone bypass. This is recorded as decision D4 (§15).
 
 ### 7.3 Processing budget
 
@@ -537,7 +542,7 @@ by delay:
 | 0.5 Hz of unseen wander | 8–10 dB |
 
 The line width of real track tones has not been measured anywhere this study could find. **It is the
-first open question for the company (§15).**
+first open question for the company (§16).**
 
 ### 9.4 Validation of the STI model (S3)
 
@@ -604,7 +609,8 @@ Fig. 34.19, p. 765). Full table: [`results/fmea.md`](results/fmea.md). Two rows 
 
 | Row | Finding | Action |
 |---|---|---|
-| 8, 9 | **latent failures of the emergency path** (relay stuck energised, emergency amplifier dead) are invisible in operation | MAINT state includes a bypass self-test: de-energise the relay at standstill and loop audio through the emergency line |
+| 8, 9 | **latent failures of the emergency path** (relay stuck energised, emergency amplifier dead) are invisible in operation | **Done in Rev B.** The MAINT self-test (CB-50 … CB-53, decision D7) releases the relay, plays a 1 kHz tone into the emergency line and reads it back on a loopback ADC input. With no loopback the box reports BIT_BYPASS and runs DEGRADED until repaired. Verified on the host and in Renode (IT09 passes a healthy path, IT10 finds a dead one). |
+| 10, 11 | CCU faults (stuck radio PTT, a babbling link) | Commander override on radio TX (CCU-04). The point-to-point star keeps a babbling link to one box, whose CRC and concealment then handle it. |
 | 7 | ANR divergence is a hearing hazard | guard + output clamp (CB-43, CB-46), verified on the host and in Renode |
 
 ## 11. Qualification plan
@@ -665,12 +671,12 @@ tools. The plans are condensed into this section.
 
 | Plan or objective | What is done here | Evidence |
 |---|---|---|
-| Software requirements (SRS) | CB-01 … CB-47, derived from SYS-3.x | [`fw/SRS.md`](fw/SRS.md) |
+| Software requirements (SRS) | CB-01 … CB-54 (crew box) and CCU-01 … CCU-08 (CCU core), derived from SYS-3.x | [`fw/SRS.md`](fw/SRS.md) |
 | Design standard | pure C99 core library, no heap, no OS calls, caller-owned state; Zephyr glue separate | `fw/lib/icom`, `fw/app` |
 | Coding standard | MISRA C:2012 via cppcheck 2.13; one documented deviation (D1: rule 2.5, protocol constants in the public header) | `fw/scripts/misra.sh`, `fw/docs/misra.md` |
-| Structural coverage | 100 % statement, branch and **MC/DC** of the core library (GCC 14 `-fcondition-coverage`) | `fw/scripts/test-host.sh`: 500/500 lines, 274/274 branches, 274/274 MC/DC condition outcomes |
-| Requirements-based tests | 1283 host checks; IT01–IT08 in Renode on the real firmware image | `fw/tests` |
-| Traceability | every CB requirement to a test; checked in CI | `fw/tools/trace.py`, `fw/docs/traceability.md` |
+| Structural coverage | 100 % statement, branch and **MC/DC** of the core library (GCC 14 `-fcondition-coverage`) | `fw/scripts/test-host.sh`: 663/663 lines, 372/372 branches, 372/372 MC/DC condition outcomes |
+| Requirements-based tests | 1370 host checks, including a system test with four boxes and the CCU on real frames; IT01–IT10 in Renode on the real firmware image | `fw/tests` |
+| Traceability | every CB and CCU requirement to a test, and every SYS requirement to its evidence; both checked in CI | `fw/tools/trace.py`, `fw/docs/traceability.md`, `tools/trace_sys.py`, `docs/sys_traceability.md` |
 | Configuration management | git; CI rebuilds the evidence | `.github/workflows/ci.yml` |
 | Not done | independence, tool qualification, object-code coverage, hardware/software integration on the real board, WCET | §14 |
 
@@ -709,11 +715,22 @@ tools. The plans are condensed into this section.
 ### 13.3 Evidence produced in this repository
 
 **Host.**
-- `fw/scripts/test-host.sh`: 1284 checks pass, with 100 % of 500 lines, 274 branches and 274 MC/DC
+- `fw/scripts/test-host.sh`: 1370 checks pass, with 100 % of 663 lines, 372 branches and 372 MC/DC
   condition outcomes (GCC 14).
 - `fw/scripts/misra.sh`: no MISRA C:2012 findings apart from deviation D1.
-- `fw/tools/trace.py`: 34 of 34 CB requirements traced, 0 errors.
+- `fw/tools/trace.py`: 47 of 47 CB and CCU requirements traced, 0 errors.
+- `tools/trace_sys.py`: 14 of 14 SYS requirements have evidence and a status
+  ([docs/sys_traceability.md](docs/sys_traceability.md)).
 - `model/tests`: 16 tests pass.
+
+**Host system test** (`test_system.c`): four crew boxes and the CCU core exchange real encoded frames
+every tick.
+- Speech reaches another box **1 frame** after the speech frame; the budget of §7.2 allows 3 bus frames.
+- The talker never hears itself over the bus (mix-minus).
+- A dead box is declared lost by the CCU after 20 ticks, and the others keep talking.
+- With the CCU dead, every live box is in BYPASS 20 ms after the last frame it received. They return
+  together after 2 s.
+- The commander takes over a radio that another box is keying.
 
 **Renode** (`fw/scripts/test-sim.sh`, the test image on the MIMXRT1064-EVK model, with `fw/sim/rig.py`
 as the CCU):
@@ -727,7 +744,9 @@ as the CCU):
 | IT05 ANR on target | CB-40, CB-41, CB-05 | 120 dB on the plant's tones; worst `icom_box_tick` 98 838 cycles = **165 µs** |
 | IT06 Wrong S_hat caught | CB-28, CB-46, CB-43 | DEGRADED **599 ms** after moving off with a 150° error; largest earphone sample 16 384 = the 0.5 FS clamp; relay stays energised |
 | IT07 Critical BIT latches | CB-24 | BYPASS in < 10 ms; still BYPASS 3 s after the fault cleared |
-| IT08 Processor stall | CB-27 | relay dropped **1.4–2.1 ms** after the stall (3 runs) |
+| IT08 Processor stall | CB-27 | relay dropped **1.4–2.1 ms** after the stall (4 runs) |
+| IT09 Emergency-path self-test | CB-50, CB-51, CB-52 | in MAINT: relay released during the 300 ms test, re-energised after it; healthy loopback passes (no BIT bits) |
+| IT10 Dead emergency path | CB-52 | no loopback: BIT_BYPASS reported; DEGRADED after leaving MAINT |
 
 Notes on the results:
 - **IT05.** The 120 dB holds only for the plant's exactly periodic tones with an exact path estimate.
@@ -777,7 +796,10 @@ Notes on the results:
     codec with an acoustic plant model: track tones from the bus speed plus the delayed anti-noise.
   - The bus is a UART at the simulator's speed, not a timed RS-485 line.
   - Cycle counts are Renode's, not the silicon's.
-- **The CCU is not built.** Its behaviour exists only as the Renode rig and as model assumptions.
+- **The CCU exists as tested core logic only.** Supervision, mix-minus, radio routing and rebroadcast are
+  built (`ccu.c`) and tested on the host. Its radio interfaces and hardware are not built, and the Renode rig
+  still emulates it on the bus.
+- **The hardware-only items are listed in [OPEN_ITEMS.md](OPEN_ITEMS.md)**, each with what would close it.
 - **The STI results are model results.** They are validated against the direct method on synthetic
   signals, not against listeners or a measured vehicle.
 - **The broadband ANR curve** is one published prototype headset [R3], not a current product.
@@ -785,7 +807,26 @@ Notes on the results:
 - **Vehicle data is from published papers** about other vehicles. The company's own vehicles and
   headsets would change every number in §7.1.
 
-## 15. Open engineering questions, and why they matter to a vehicle-intercom maker
+## 15. Decision log
+
+Each decision is recorded with its basis. Wasson treats a trade decision as a resource commitment
+(Principle 32.11, pp. 698–700). "Reversible" means it can be changed without changing the requirements.
+
+| ID | Decision | Basis | Alternatives rejected | Reversible |
+|---|---|---|---|---|
+| D1 | 16 kHz wideband audio (CB-01) | S1: 32 kHz adds 0.006 STI at 111 dB(A), and the 2–8 kHz bands are limited by transmit noise; narrowband costs 0.02–0.05 STI | 8 kHz (narrowband), 32 kHz | yes (frame and bus sizes scale) |
+| D2 | 1 ms audio frames (CB-02) | S4: sidetone 5.4 ms against a 10 ms limit; 2 ms frames leave 1.6 ms of margin, and 4 ms frames break the limit | 2, 4 or 8 ms frames | yes |
+| D3 | Above 108 dB(A), the system needs about 10 dB more passive attenuation (a communication earplug) or a shorter exposure | S1: no intercom-only configuration meets the 8-h TWA at 111 dB(A); C6 reaches 114 dB(A) | louder earphone (it raises the dose); ANR alone (not enough) | user decision (OPEN_ITEMS H5) |
+| D4 | Sidetone through the codec's analog bypass; digital sidetone (5.4 ms) kept as the fallback | MIL-STD-1472G 5.3.1.6 j "in phase"; Stone & Moore limits are met either way | digital only | yes (codec setting) |
+| D5 | Architecture A2: star RS-485 TDM, CCU mixing, analog bypass in every box | S5: 7.47 vs 7.38 (A3), wins 68 % of random weightings; no ±10 % weight change flips it | A1 analog party line; A3 TSN with distributed mixing (the growth path) | at the CCU and bus level |
+| D6 | Tonal ANR referenced to the sprocket phase; bus speed is the fallback | S2-D: 35 dB with the sprocket phase, 29 dB with 50 Hz bus speed, about 10 dB with unseen wander | reference microphone (causality); speed only | yes (input selection) |
+| D7 | Emergency-path self-test through a loopback ADC input, in MAINT only | FMEA rows 8–9 were latent failures; the test needs the relay released, so it is limited to standstill | relying on the crew noticing; a second relay contact as a sense line | yes |
+| D8 | Broadband ANR stays analog in the headset; the digital ANR handles tones only | S2-C: the prediction bound falls from 34 dB at 50 µs to 1 dB at 2 ms | digital broadband ANR in the 1 ms pipeline | no (hardware) |
+| D9 | 28 V input: TVS standing off 100 V, a linear surge stopper clamping 33 V with a 1 A limit, a 9–36 V converter | S7: a 36 V TVS would absorb 230 J; the stopper takes 6.9 J; IES and cranking need no hold-up | low-voltage TVS; hold-up capacitance (22.7 mF) | no (hardware) |
+| D10 | The FxLMS step size is specified per second, not per sample | S3: an unscaled μ at 32 kHz exceeded the delayed-LMS bound and amplified the tones by 3–6 dB | per-sample μ | yes |
+| D11 | Downlink commands are one-shot; the maintainer repeats a command that gets no response | Commands are maintenance-only and at standstill. Two frames in one tick keep only the newer one (found by the host test) | acknowledged commands with retries | yes (CCU change only) |
+
+## 16. Open engineering questions, and why they matter to a vehicle-intercom maker
 
 1. **How wide are real track tones, and can a sprocket-phase signal be had from the vehicle?** This
    decides whether speed-referenced tonal ANR gives about 30 dB or about 8 dB (§9.3). It is cheap to
@@ -801,7 +842,7 @@ Notes on the results:
 5. **BIT coverage of the crew box** is the parameter that decides the fail-operational number (S6). It
    should be designed and measured (fault-injection campaign), not assumed.
 
-## 16. References
+## 17. References
 
 **Wasson**
 
@@ -898,3 +939,12 @@ Wiley, 1996. Filtered-x LMS and its ±90° phase condition (background, not re-r
 
 **Where the evidence is.** The verification status of every number, the URLs, and the record of what
 could not be fetched (DTIC was offline) are in [`docs/sources.md`](docs/sources.md).
+
+---
+
+**Revision history**
+
+| Rev | Date | Change |
+|---|---|---|
+| A | 9 Nov 2026 | First issue |
+| B | 10 Nov 2026 | CCU core built and tested; emergency-path self-test (closes FMEA rows 8–9); host system test with four boxes and the CCU; system-level verification matrix (`docs/sys_traceability.md`) checked in CI; decision log; OPEN_ITEMS.md; Renode IT09–IT10 |

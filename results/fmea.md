@@ -7,9 +7,11 @@
 | 5 | crew box | codec failure | no audio to/from headset | crew member loses digital path | BIT: codec loop-back | latched BYPASS | 3 | D | Medium |
 | 6 | crew box | local supply out of range | erratic audio | as above | BIT: supply monitor | latched BYPASS | 3 | D | Medium |
 | 7 | crew box | ANR divergence (wrong S_hat) | loud low-frequency tone | hearing hazard, masking | error-power guard (+6 dB for 0.2 s), weight guard | ANR off -> DEGRADED, output clamped | 3 | D | Medium |
-| 8 | crew box | bypass relay stuck energised | no emergency path | latent until needed | maintenance test of bypass (MAINT) | none in operation: latent failure | 2 | E | Medium |
-| 9 | crew box | emergency amplifier dead | no audio in BYPASS | latent until needed | maintenance test of bypass | none in operation: latent failure | 3 | D | Medium |
-| 10 | headset | mic open / short | no transmit | crew member cannot talk | BIT: mic bias current | report to crew/CCU; spare headset | 3 | C | Medium |
-| 11 | headset | earphone open | no receive | crew member cannot hear | BIT: earphone impedance | spare headset | 3 | C | Medium |
-| 12 | power 28 V | 1275E surge 100 V / 50 ms | input stage stress | box reset if unprotected | design: surge stopper, see power study | rides through | 3 | C | Medium |
-| 13 | power 28 V | cranking dip to 16 V / 30 s; IES 12 V / 1 s | supply droop | reset during engine start | design: wide-input converter + hold-up | rides through | 3 | B | Serious |
+| 8 | crew box | bypass relay stuck energised | no emergency path | latent until the next self-test | MAINT emergency-path self-test: no loopback (CB-50..52, IT10) | BIT_BYPASS reported, box DEGRADED until repaired | 2 | E | Medium |
+| 9 | crew box | emergency amplifier dead | no audio in BYPASS | latent until the next self-test | MAINT emergency-path self-test: no loopback (CB-50..52, IT10) | BIT_BYPASS reported, box DEGRADED until repaired | 3 | D | Medium |
+| 10 | CCU | a box keeps its radio PTT keyed (stuck switch) | radio held in transmit | net blocked for others | radio owner visible in CCU state; commander override (CCU-04) | commander keys the radio and takes it over | 3 | C | Medium |
+| 11 | CCU | garbage frames on one link (babbling port) | CRC errors at that box | that box conceals, then BYPASS | CRC-16 and lost-frame counters (telemetry) | point-to-point star: the fault stays on one link | 4 | C | Low |
+| 12 | headset | mic open / short | no transmit | crew member cannot talk | BIT: mic bias current | report to crew/CCU; spare headset | 3 | C | Medium |
+| 13 | headset | earphone open | no receive | crew member cannot hear | BIT: earphone impedance | spare headset | 3 | C | Medium |
+| 14 | power 28 V | 1275E surge 100 V / 50 ms | input stage stress | box reset if unprotected | design: surge stopper, see power study | rides through | 3 | C | Medium |
+| 15 | power 28 V | cranking dip to 16 V / 30 s; IES 12 V / 1 s | supply droop | reset during engine start | design: wide-input converter + hold-up | rides through | 3 | B | Serious |
