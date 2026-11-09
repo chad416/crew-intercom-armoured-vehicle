@@ -739,7 +739,7 @@ as the CCU):
 |---|---|---|
 | IT01 Boot to NORMAL | CB-20, CB-27 | NORMAL 1.35 ms after boot; relay energised |
 | IT02 CCU loss to BYPASS | CB-22, CB-27, CB-04 | BYPASS **20.3 ms** after the last frame; relay dropped at 21.3–22.3 ms (varies by run with the tick phase); telemetry continues |
-| IT03 Recovery and no chatter | CB-23 | 0 transitions in 3 s at 50 % frame loss; NORMAL **2000.0 ms** after the link became good |
+| IT03 Recovery and no chatter | CB-23 | 0 transitions in 3 s at 50 % frame loss; NORMAL **1999–2000 ms** after the link became good (a frame just before the switch can count) |
 | IT04 Corrupted frames | CB-12, CB-15 | 1 frame in 10 corrupted for 2 s: 203–204 CRC errors, 203 frames lost (a frame corrupted in the last tick is counted when the next one arrives), no mode change |
 | IT05 ANR on target | CB-40, CB-41, CB-05 | 120 dB on the plant's tones; worst `icom_box_tick` 98 838 cycles = **165 µs** |
 | IT06 Wrong S_hat caught | CB-28, CB-46, CB-43 | DEGRADED **599 ms** after moving off with a 150° error; largest earphone sample 16 384 = the 0.5 FS clamp; relay stays energised |

@@ -59,7 +59,8 @@ IT03 Recovery Needs 2 s Of Good Link
     ${tn}=    Rig    rig.first_time_in(1, ${t1})
     ${dt}=    Evaluate    float($tn) - float($t1)
     Log To Console    \nNORMAL ${dt} ms after the link became good
-    Should Be True    float($tn) > 0 and 1999.0 <= $dt <= 2010.0
+    # a frame received just before the switch may already start the 2000-frame run: up to 2 ms early
+    Should Be True    float($tn) > 0 and 1997.0 <= $dt <= 2010.0
 
 IT04 Corrupted Frames Are Concealed
     [Documentation]    CB-12, CB-15: 1 frame in 10 corrupted: counted, concealed, no mode change.
