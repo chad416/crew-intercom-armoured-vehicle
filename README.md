@@ -1,5 +1,7 @@
 # Digital crew intercom for an armoured vehicle
 
+[![ci](https://github.com/chad416/crew-intercom-armoured-vehicle/actions/workflows/ci.yml/badge.svg)](https://github.com/chad416/crew-intercom-armoured-vehicle/actions/workflows/ci.yml)
+
 This repository studies one engineering question.
 
 **The question:** can crew speech stay intelligible in 110 dB(A) and more of vehicle noise, within a
