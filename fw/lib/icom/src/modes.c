@@ -10,7 +10,7 @@
  * Transition table (exit criteria of the current state):
  *   INIT     -> NORMAL    link up and no critical BIT fault
  *   INIT     -> BYPASS    critical BIT fault (latched) or no link within T_INIT
- *   NORMAL   -> DEGRADED  ANR BIT fault
+ *   NORMAL   -> DEGRADED  ANR BIT fault, or emergency-path self-test failed
  *   NORMAL/DEGRADED/MAINT -> BYPASS  no valid frame for T_LOSS, or critical fault (latched)
  *   DEGRADED -> NORMAL    ANR fault cleared
  *   BYPASS   -> NORMAL    not latched, link good for T_RECOVER (DEGRADED if ANR fault)
@@ -42,7 +42,7 @@ static icom_state_t digital_state(uint8_t bits)
 {
 	icom_state_t s = ICOM_ST_NORMAL;
 
-	if ((bits & ICOM_BIT_ANR) != 0U) {
+	if ((bits & (uint8_t)(ICOM_BIT_ANR | ICOM_BIT_BYPASS)) != 0U) {
 		s = ICOM_ST_DEGRADED;
 	}
 	return s;

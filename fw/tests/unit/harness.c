@@ -59,6 +59,8 @@ int main(void)
 	test_mix();
 	test_anr();
 	test_box();
+	test_ccu();
+	test_system();
 	printf("%d checks, %d failures\n", g_checks, g_failures);
 	return g_failures ? 1 : 0;
 }

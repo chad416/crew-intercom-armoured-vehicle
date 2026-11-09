@@ -40,6 +40,8 @@ volatile uint32_t icom_diag_rx_overflow;
 volatile uint32_t icom_test_bits;  /* BIT bits injected by the rig */
 volatile uint32_t icom_test_stall; /* 1: the audio thread hangs (processor fault) */
 volatile int32_t icom_test_out_peak; /* largest earphone sample since boot */
+/* emergency-line loopback gain in percent (100 = healthy; 0 = relay stuck or amplifier dead) */
+volatile uint32_t icom_test_loop_pct = 100U;
 
 /* Acoustic plant (DOSSIER §9): 3 track harmonics at the error microphone, plus
  * the anti-noise delayed by 32 samples (2 ms of converters and acoustics; the
@@ -115,6 +117,7 @@ static void audio_thread(void *a, void *b, void *c)
 	static int16_t mic[ICOM_N];
 	static int16_t err[ICOM_N];
 	static int16_t out[ICOM_N];
+	static int16_t aux[ICOM_N]; /* emergency-line loopback ADC input */
 	static uint8_t up[ICOM_MAX_FRAME];
 	uint8_t rx[64];
 
@@ -133,15 +136,19 @@ static void audio_thread(void *a, void *b, void *c)
 		}
 		bits = (uint8_t)icom_test_bits;
 		plant_frame((float)box.speed_cckmh / 100.0f, err);
+		for (uint32_t i = 0; i < ICOM_N; i++) {
+			/* loopback of the last earphone frame, only while the relay is released */
+			aux[i] = box.bt.running ? (int16_t)(((int32_t)last_out[i] * (int32_t)icom_test_loop_pct) / 100) : 0;
+		}
 #endif
 		while ((n = ring_buf_get(&rx_ring, rx, sizeof(rx))) > 0U) {
 			icom_box_rx(&box, rx, n);
 		}
 		const uint32_t t0 = k_cycle_get_32();
-		const uint32_t len = icom_box_tick(&box, mic, err, bits, out, up, sizeof(up));
+		const uint32_t len = icom_box_tick(&box, mic, err, aux, bits, out, up, sizeof(up));
 		const uint32_t dt = k_cycle_get_32() - t0;
 
-		(void)gpio_pin_set_dt(&relay, icom_modes_relay_drive(&box.modes) ? 1 : 0);
+		(void)gpio_pin_set_dt(&relay, icom_box_relay_drive(&box) ? 1 : 0);
 		for (uint32_t i = 0; i < len; i++) {
 			uart_poll_out(bus_uart, up[i]);
 		}

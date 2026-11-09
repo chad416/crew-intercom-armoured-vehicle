@@ -21,6 +21,9 @@ void icom_box_init(icom_box_t *b, uint8_t box_id)
 	icom_anr_set_path(&b->anr, 1.0f, 0.003f);
 	b->rx_valid = false;
 	b->up_audio = true;
+	b->ptt = 0U;
+	icom_bt_init(&b->bt);
+	b->bypass_fault = false;
 	b->bits = 0U;
 	b->tele_rr = 0U;
 	b->speed_cckmh = 0U;
@@ -44,6 +47,8 @@ static void command(icom_box_t *b, const icom_down_t *d)
 		icom_anr_reset(&b->anr);
 	} else if ((d->cmd == ICOM_CMD_SHAT_ROT) && (b->modes.state == ICOM_ST_MAINT)) {
 		icom_anr_rotate(&b->anr, (float)d->arg);
+	} else if ((d->cmd == ICOM_CMD_BYPASS_TEST) && (b->modes.state == ICOM_ST_MAINT)) {
+		icom_bt_start(&b->bt);
 	} else {
 		/* other commands are handled by the mode machine */
 	}
@@ -66,8 +71,8 @@ static uint16_t telemetry(icom_box_t *b, uint8_t id)
 	return v;
 }
 
-uint32_t icom_box_tick(icom_box_t *b, const int16_t mic[ICOM_N], const int16_t err[ICOM_N], uint8_t bits,
-		       int16_t out[ICOM_N], uint8_t *upbuf, uint32_t cap)
+uint32_t icom_box_tick(icom_box_t *b, const int16_t mic[ICOM_N], const int16_t err[ICOM_N],
+		       const int16_t aux[ICOM_N], uint8_t bits, int16_t out[ICOM_N], uint8_t *upbuf, uint32_t cap)
 {
 	icom_chans_t pcm;
 	float errf[ICOM_N];
@@ -88,7 +93,13 @@ uint32_t icom_box_tick(icom_box_t *b, const int16_t mic[ICOM_N], const int16_t e
 	}
 	b->rx_valid = false;
 
-	b->bits = (uint8_t)((uint8_t)(bits & (uint8_t)~ICOM_BIT_ANR) | (b->anr.fault ? ICOM_BIT_ANR : 0U));
+	b->bits = (uint8_t)(bits & (uint8_t)~(uint8_t)(ICOM_BIT_ANR | ICOM_BIT_BYPASS));
+	if (b->anr.fault) {
+		b->bits = (uint8_t)(b->bits | ICOM_BIT_ANR);
+	}
+	if (b->bypass_fault) {
+		b->bits = (uint8_t)(b->bits | ICOM_BIT_BYPASS);
+	}
 	in.link_ok = (frame != NULL);
 	in.missed_run = b->link.missed_run;
 	in.good_run = b->link.good_run;
@@ -106,13 +117,24 @@ uint32_t icom_box_tick(icom_box_t *b, const int16_t mic[ICOM_N], const int16_t e
 		icom_anr_frame(&b->anr, errf, 0.0f, anti);
 	}
 	(void)icom_mix_frame(&b->mix, &pcm, flags, mic, anti, out);
+	if (b->bt.running) {
+		if (st == ICOM_ST_MAINT) {
+			icom_bt_frame(&b->bt, aux, out);
+			if (b->bt.result != ICOM_BT_NONE) {
+				b->bypass_fault = (b->bt.result == ICOM_BT_FAIL);
+			}
+		} else {
+			/* left MAINT (vehicle moved, link lost): the test is abandoned */
+			icom_bt_abort(&b->bt);
+		}
+	}
 
 	if (st != ICOM_ST_INIT) {
 		b->up.seq = b->seq;
 		b->up.box_id = b->box_id;
 		b->up.state = (uint8_t)st;
 		b->up.bits = b->bits;
-		b->up.ptt = 0U;
+		b->up.ptt = b->ptt;
 		b->up.tele_id = b->tele_rr;
 		b->up.tele = telemetry(b, b->tele_rr);
 		if ((st == ICOM_ST_BYPASS) || (!b->up_audio)) {
@@ -128,4 +150,14 @@ uint32_t icom_box_tick(icom_box_t *b, const int16_t mic[ICOM_N], const int16_t e
 		b->tele_rr = (uint8_t)((b->tele_rr + 1U) % TELE_N);
 	}
 	return len;
+}
+
+bool icom_box_relay_drive(icom_box_t *b)
+{
+	bool drive = false;
+
+	if (!b->bt.running) {
+		drive = icom_modes_relay_drive(&b->modes);
+	}
+	return drive;
 }

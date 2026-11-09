@@ -140,3 +140,40 @@ IT08 Processor Stall Drops The Relay
     ${dt}=    Evaluate    float($drop) - float($t0)
     Log To Console    \nrelay dropped ${dt} ms after the stall
     Should Be True    float($drop) > 0 and $dt <= 3.5
+
+IT09 Emergency Path Self-Test Passes
+    [Documentation]    CB-50, CB-51, CB-52: in MAINT the box releases the relay, plays the test tone
+    ...    into the emergency line and reads it back; a healthy path passes and the relay re-energises.
+    [Tags]    CB-50    CB-51    CB-52
+    Boot To Normal
+    Rig    rig.command(${CMD_MAINT_ENTER})
+    Advance    0.01
+    State Should Be    ${ST_MAINT}
+    Rig    rig.command(${CMD_BYPASS_TEST})
+    Advance    0.1
+    ${e}=    Rig    rig.relay_energised()
+    Should Be Equal    ${e}    False    # relay released during the test
+    Advance    0.3
+    ${e}=    Rig    rig.relay_energised()
+    Should Be Equal    ${e}    True
+    ${bits}=    Rig    rig.bits
+    Should Be Equal As Integers    ${bits}    0
+    Rig    rig.command(${CMD_MAINT_EXIT})
+    Advance    0.01
+    State Should Be    ${ST_NORMAL}
+
+IT10 Dead Emergency Path Is Found
+    [Documentation]    CB-52: with no loopback (relay stuck energised or emergency amplifier dead) the
+    ...    test fails, the latent fault is reported and the box runs DEGRADED after MAINT.
+    [Tags]    CB-52
+    Boot To Normal
+    Rig    rig.write_u32('icom_test_loop_pct', 0)
+    Rig    rig.command(${CMD_MAINT_ENTER})
+    Advance    0.01
+    Rig    rig.command(${CMD_BYPASS_TEST})
+    Advance    0.4
+    ${bits}=    Rig    rig.bits
+    Should Be Equal As Integers    ${bits}    ${BIT_BYPASS}
+    Rig    rig.command(${CMD_MAINT_EXIT})
+    Advance    0.01
+    State Should Be    ${ST_DEGRADED}

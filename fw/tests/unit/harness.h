@@ -78,5 +78,7 @@ void test_modes(void);
 void test_mix(void);
 void test_anr(void);
 void test_box(void);
+void test_ccu(void);
+void test_system(void);
 
 #endif

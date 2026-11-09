@@ -14,6 +14,8 @@ ${ST_MAINT}         4
 ${CMD_MAINT_ENTER}  1
 ${CMD_MAINT_EXIT}   2
 ${CMD_SHAT_ROT}     3
+${CMD_BYPASS_TEST}  5
+${BIT_BYPASS}       8
 
 *** Keywords ***
 Boot

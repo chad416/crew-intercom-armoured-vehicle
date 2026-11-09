@@ -7,7 +7,8 @@
 
 static icom_box_t box;
 static plant_t pl;
-static int16_t mic[ICOM_N], out[ICOM_N], errs[ICOM_N];
+static int16_t mic[ICOM_N], out[ICOM_N], errs[ICOM_N], aux[ICOM_N];
+static double loop_gain; /* emergency-line loopback: aux = gain * last earphone frame */
 static uint8_t up[ICOM_MAX_FRAME];
 static uint8_t seq;
 static icom_up_t last_up;
@@ -34,7 +35,8 @@ static uint32_t tick(uint8_t bits, double speed_kmh)
 	for (unsigned i = 0; i < ICOM_N; i++) anti[i] = (float)out[i] / 32768.0f;
 	plant_frame(&pl, speed_kmh, anti, err, NULL);
 	for (unsigned i = 0; i < ICOM_N; i++) errs[i] = (int16_t)(err[i] * 32767.0f);
-	uint32_t n = icom_box_tick(&box, mic, errs, bits, out, up, sizeof(up));
+	for (unsigned i = 0; i < ICOM_N; i++) aux[i] = (int16_t)(loop_gain * out[i]);
+	uint32_t n = icom_box_tick(&box, mic, errs, aux, bits, out, up, sizeof(up));
 	if (n) {
 		icom_parser_t p;
 		icom_down_t dd;
@@ -176,6 +178,64 @@ void test_box(void)
 	box.up_audio = false;
 	CHECK_EQ(tick(0, 0.0), ICOM_HDR_LEN + ICOM_UP_FIX + ICOM_CRC_LEN);
 	box.up_audio = true;
+
+	/* push-to-talk inputs go to the uplink */
+	box.ptt = ICOM_PTT_ICOM | ICOM_PTT_R2;
+	run(1, 0, 1, 0);
+	CHECK_EQ(last_up.ptt, ICOM_PTT_ICOM | ICOM_PTT_R2);
+	box.ptt = 0;
+
+	/* CB-50..53: emergency-path self-test in MAINT */
+	CHECK_EQ(box.modes.state, ICOM_ST_NORMAL);
+	send(0, ICOM_CMD_BYPASS_TEST, 0); /* refused outside MAINT */
+	tick(0, 0.0);
+	CHECK(!box.bt.running);
+	send(0, ICOM_CMD_MAINT_ENTER, 0);
+	tick(0, 0.0);
+	CHECK_EQ(box.modes.state, ICOM_ST_MAINT);
+	loop_gain = 1.0; /* healthy relay and amplifier */
+	send(0, ICOM_CMD_BYPASS_TEST, 0);
+	tick(0, 0.0);
+	CHECK(box.bt.running);
+	CHECK(!icom_box_relay_drive(&box)); /* relay released during the test */
+	run(ICOM_BT_TICKS, 0, 1, 0);
+	CHECK(!box.bt.running);
+	CHECK_EQ(box.bt.result, ICOM_BT_PASS);
+	CHECK(!box.bypass_fault);
+	CHECK(icom_box_relay_drive(&box) != icom_box_relay_drive(&box)); /* toggling again */
+	loop_gain = 0.0; /* stuck relay or dead emergency amplifier: no loopback */
+	send(0, ICOM_CMD_BYPASS_TEST, 0); /* one downlink per tick: tick before the next frame */
+	tick(0, 0.0);
+	run(ICOM_BT_TICKS + 2, 0, 1, 0);
+	CHECK_EQ(box.bt.result, ICOM_BT_FAIL);
+	CHECK(box.bypass_fault);
+	CHECK(last_up.bits & ICOM_BIT_BYPASS);
+	loop_gain = 20.0; /* loopback far too strong also fails */
+	send(0, ICOM_CMD_BYPASS_TEST, 0);
+	tick(0, 0.0);
+	run(ICOM_BT_TICKS + 2, 0, 1, 0);
+	CHECK_EQ(box.bt.result, ICOM_BT_FAIL);
+	send(0, ICOM_CMD_MAINT_EXIT, 0);
+	tick(0, 0.0);
+	CHECK_EQ(box.modes.state, ICOM_ST_DEGRADED); /* latent failure now visible */
+	/* repair: a passing test clears the fault */
+	send(0, ICOM_CMD_MAINT_ENTER, 0);
+	tick(0, 0.0);
+	loop_gain = 1.0;
+	send(0, ICOM_CMD_BYPASS_TEST, 0);
+	tick(0, 0.0);
+	run(ICOM_BT_TICKS + 2, 0, 1, 0);
+	CHECK(!box.bypass_fault);
+	/* the test is abandoned when the vehicle moves (MAINT ends) */
+	send(0, ICOM_CMD_BYPASS_TEST, 0);
+	tick(0, 0.0);
+	run(10, 0, 1, 0);
+	CHECK(box.bt.running);
+	run(2, 500, 1, 0);
+	CHECK(!box.bt.running);
+	CHECK_EQ(box.bt.result, ICOM_BT_NONE);
+	CHECK_EQ(box.modes.state, ICOM_ST_NORMAL);
+	loop_gain = 0.0;
 
 	/* CB-24: critical BIT -> latched BYPASS */
 	run(5, 0, 1, ICOM_BIT_CODEC);

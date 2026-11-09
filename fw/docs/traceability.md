@@ -1,6 +1,6 @@
 # Requirement-to-test traceability
 
-Every CB requirement in [../SRS.md](../SRS.md) maps to unit tests (`tests/unit/file.c:function`), Renode
+Every CB and CCU requirement in [../SRS.md](../SRS.md) maps to unit tests (`tests/unit/file.c:function`), Renode
 integration tests (`tests/robot/icom.robot`, IT01–IT08) or other evidence. `tools/trace.py` fails if a row
 is missing or names a test that does not exist. CI runs it.
 
@@ -40,3 +40,16 @@ is missing or names a test that does not exist. CI runs it.
 | CB-45 | SYS-3.2.2 | test_anr.c:test_anr | | |
 | CB-46 | SYS-3.2.3 | test_anr.c:test_anr, test_box.c:test_box | IT06 | |
 | CB-47 | SYS-3.2.2 | test_anr.c:test_anr, test_box.c:test_box | IT05 | |
+| CB-50 | SYS-3.2.7 | test_box.c:test_box | IT09 | |
+| CB-51 | SYS-3.2.7 | test_box.c:test_box | IT09 | |
+| CB-52 | SYS-3.2.7 | test_box.c:test_box | IT09, IT10 | |
+| CB-53 | SYS-3.2.7 | test_box.c:test_box | | |
+| CB-54 | SYS-3.3.1 | test_box.c:test_box, test_system.c:test_system | | |
+| CCU-01 | SYS-3.2.7 | test_ccu.c:test_ccu, test_system.c:test_system | | |
+| CCU-02 | SYS-3.2.1 | test_ccu.c:test_ccu, test_system.c:test_system | | |
+| CCU-03 | SYS-3.3.1 | test_ccu.c:test_ccu | | |
+| CCU-04 | SYS-3.2.1 | test_ccu.c:test_ccu, test_system.c:test_system | | |
+| CCU-05 | SYS-3.3.1 | test_ccu.c:test_ccu | | |
+| CCU-06 | SYS-3.2.7 | test_ccu.c:test_ccu | | |
+| CCU-07 | SYS-3.2.7 | test_system.c:test_system | | |
+| CCU-08 | SYS-3.2.7 | test_system.c:test_system | | |

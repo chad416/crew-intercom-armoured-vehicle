@@ -18,14 +18,14 @@ ROOT = os.path.dirname(FW)
 
 def srs_ids():
     text = open(os.path.join(FW, "SRS.md"), encoding="utf-8").read()
-    return sorted(set(re.findall(r"\*\*(CB-\d\d)\s*\([^)]*\):\*\*", text)))
+    return sorted(set(re.findall(r"\*\*((?:CB|CCU)-\d\d)\s*\([^)]*\):\*\*", text)))
 
 
 def table():
     rows = {}
     for line in open(os.path.join(FW, "docs", "traceability.md"), encoding="utf-8"):
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
-        if len(cells) == 5 and re.fullmatch(r"CB-\d\d", cells[0]):
+        if len(cells) == 5 and re.fullmatch(r"(?:CB|CCU)-\d\d", cells[0]):
             rows[cells[0]] = cells
     return rows
 
@@ -38,7 +38,7 @@ def main():
     }
     robot = open(os.path.join(FW, "tests", "robot", "icom.robot"), encoding="utf-8").read()
     it_names = set(re.findall(r"^(IT\d\d)\b", robot, re.M))
-    tags = set(re.findall(r"\b(CB-\d\d)\b", " ".join(re.findall(r"\[Tags\](.*)", robot))))
+    tags = set(re.findall(r"\b((?:CB|CCU)-\d\d)\b", " ".join(re.findall(r"\[Tags\](.*)", robot))))
 
     ids = srs_ids()
     rows = table()

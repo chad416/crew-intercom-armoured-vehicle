@@ -92,6 +92,43 @@ existing test.
 - **CB-47 (SYS-3.2.2):** The ANR shall report its attenuation estimate (0.1 dB units) in the uplink
   telemetry.
 
+## 7. Emergency-path self-test (Rev B)
+
+Closes the latent-failure rows 8 and 9 of the FMEA (DOSSIER §10). Decision D7 is in the DOSSIER decision log.
+
+- **CB-50 (SYS-3.2.7):** The crew box shall accept the BYPASS_TEST command only in MAINT. While the test runs it
+  shall hold the relay drive inactive.
+- **CB-51 (SYS-3.2.7):** During the test the crew box shall play a 1 kHz tone at 0.1 of full scale for 300 ms. It
+  shall measure the loopback input after 50 ms of settling.
+- **CB-52 (SYS-3.2.7):** The test shall pass when the loopback mean square is within ±12 dB of the nominal level.
+  - Otherwise the box shall report ICOM_BIT_BYPASS and run DEGRADED until a later test passes.
+- **CB-53 (SYS-3.2.7):** The crew box shall abandon a running test without a result when it leaves MAINT.
+- **CB-54 (SYS-3.3.1):** The crew box shall report its push-to-talk inputs (intercom, radio 1, radio 2) in every
+  uplink frame.
+
+## 8. CCU core (Rev B)
+
+`fw/lib/icom/src/ccu.c`; parent requirements SYS-3.2.7 and SYS-3.3.x.
+
+- **CCU-01 (SYS-3.2.7):** The CCU shall declare a box lost after 20 consecutive ticks without its uplink. It shall
+  clear that state on the box's next uplink.
+- **CCU-02 (SYS-3.2.1):** Each box's intercom channel shall be the sum of the other boxes that hold intercom PTT
+  and send audio (mix-minus), saturated at 16 bits.
+  - The channel's active flag shall be set only when another box talks.
+- **CCU-03 (SYS-3.3.1):** Each downlink shall carry the alarm and both radio receive channels with their activity
+  flags, the vehicle speed and the CCU mode.
+- **CCU-04 (SYS-3.2.1):** A radio shall be transmitted by the commander's box when it keys that radio. Otherwise
+  the lowest box ID that keys it shall transmit.
+- **CCU-05 (SYS-3.3.1):** In REBROADCAST, a radio that no crew member keys shall retransmit the other radio's
+  receive audio while that radio's squelch is open. A crew member keying the radio shall override this.
+- **CCU-06 (SYS-3.2.7):** A command queued for a box shall be sent once, in that box's next downlink. Commands
+  for box IDs out of range shall be ignored.
+- **CCU-07 (SYS-3.2.7):** With four boxes and the CCU exchanging encoded frames, speech shall reach another box
+  within 2 frames of the speech frame (digital pipeline).
+  - A box shall never hear itself over the bus.
+- **CCU-08 (SYS-3.2.7):** With the CCU dead, every live box shall be in BYPASS 20 ms later. They shall return
+  together after 2 s of good frames.
+
 ## Revision history
 
 | Rev | Change | Found by |
@@ -99,3 +136,5 @@ existing test.
 | A | Lost frames are counted from sequence gaps only. The first version also counted the missing tick, so every corrupted frame counted twice. | Renode IT04 (406 frames lost for 203 CRC errors; now 203) |
 | A | The ANR waits 0.2 s of observation before switching on (CB-44). Without it, the guard reference was 0 at the first frame and the guard tripped at once. | host test_anr |
 | A | MAINT may also be entered from DEGRADED, so that a faulty ANR can be repaired. | host test_box |
+| B | Emergency-path self-test added (CB-50..CB-53), closing the FMEA latent-failure rows. PTT in the uplink (CB-54). | FMEA rows 8–9 |
+| B | CCU core added (CCU-01..CCU-08), plus a host system test with 4 boxes and the CCU on real frames. | DOSSIER §14 limit "CCU not built" |
