@@ -1,0 +1,114 @@
+{
+ "measured": {
+  "loss_per_1e6": {
+   "A1": 577.8010086688878,
+   "A2": 36.611285872401034,
+   "A3": 36.6128681715816
+  },
+  "latency_ms": {
+   "A1": 0.0,
+   "A2": 8.565,
+   "A3": 8.375
+  },
+  "sti": {
+   "A1": 0.26708160120805113,
+   "A2": 0.4364758578271161,
+   "A3": 0.4364758578271161
+  },
+  "conductor_m": {
+   "A1": 240.0,
+   "A2": 144.0,
+   "A3": 144.0
+  }
+ },
+ "scores": {
+  "fail-operational": {
+   "A1": 4.838172648464656,
+   "A2": 9.758079219341809,
+   "A3": 9.758064834803804
+  },
+  "intelligibility": {
+   "A1": 1.0,
+   "A2": 6.73568933703371,
+   "A3": 6.73568933703371
+  },
+  "latency": {
+   "A1": 10.0,
+   "A2": 6.14575,
+   "A3": 6.23125
+  },
+  "harness mass": {
+   "A1": 3.6999999999999997,
+   "A2": 8.02,
+   "A3": 8.02
+  },
+  "EMC robustness": {
+   "A1": 4.0,
+   "A2": 8.0,
+   "A3": 7.0
+  },
+  "growth": {
+   "A1": 3.0,
+   "A2": 6.0,
+   "A3": 9.0
+  },
+  "cost and complexity": {
+   "A1": 8.0,
+   "A2": 6.0,
+   "A3": 4.0
+  }
+ },
+ "weights": {
+  "fail-operational": 10,
+  "intelligibility": 9,
+  "latency": 7,
+  "EMC robustness": 7,
+  "harness mass": 5,
+  "growth": 4,
+  "cost and complexity": 5
+ },
+ "total": {
+  "A1": 4.805994180524395,
+  "A2": 7.47494140907918,
+  "A3": 7.381289412368966
+ },
+ "oat_winner": {
+  "fail-operational x0.9": "A2",
+  "fail-operational x1.1": "A2",
+  "intelligibility x0.9": "A2",
+  "intelligibility x1.1": "A2",
+  "latency x0.9": "A2",
+  "latency x1.1": "A2",
+  "EMC robustness x0.9": "A2",
+  "EMC robustness x1.1": "A2",
+  "harness mass x0.9": "A2",
+  "harness mass x1.1": "A2",
+  "growth x0.9": "A2",
+  "growth x1.1": "A2",
+  "cost and complexity x0.9": "A2",
+  "cost and complexity x1.1": "A2"
+ },
+ "mc_win_pct": {
+  "A1": 0.1,
+  "A2": 67.655,
+  "A3": 32.245
+ },
+ "judged_reasons": {
+  "EMC robustness": {
+   "A1": "audio-band lines: bulk-current injection (CS114/CS116) is directly audible as hum/clicks",
+   "A2": "differential RS-485, CRC rejects corrupted frames, concealment hides single losses",
+   "A3": "transformer-isolated PHYs, CRC; faster edges raise RE102 emission risk"
+  },
+  "growth": {
+   "A1": "every new source needs new pairs and a new party-line",
+   "A2": "new channels fit in the TDM frame up to the link rate; CCU ports limit stations",
+   "A3": "streams and stations added by configuration; data and video share the network"
+  },
+  "cost and complexity": {
+   "A1": "few parts, no software",
+   "A2": "custom TDM protocol, simple PHYs, one CCU",
+   "A3": "TSN switch, time sync (gPTP), stream reservation: most software and parts"
+  }
+ },
+ "fig": "C:\\Users\\chand\\Downloads\\New CLI\\SW_PROJECTS\\10_crew-intercom-armoured-vehicle\\docs\\img\\s5_aoa.png"
+}

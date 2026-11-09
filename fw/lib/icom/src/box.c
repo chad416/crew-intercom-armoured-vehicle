@@ -20,6 +20,7 @@ void icom_box_init(icom_box_t *b, uint8_t box_id)
 	icom_anr_init(&b->anr, 0.15f, 3U, 0.002f);
 	icom_anr_set_path(&b->anr, 1.0f, 0.003f);
 	b->rx_valid = false;
+	b->up_audio = true;
 	b->bits = 0U;
 	b->tele_rr = 0U;
 	b->speed_cckmh = 0U;
@@ -114,7 +115,7 @@ uint32_t icom_box_tick(icom_box_t *b, const int16_t mic[ICOM_N], const int16_t e
 		b->up.ptt = 0U;
 		b->up.tele_id = b->tele_rr;
 		b->up.tele = telemetry(b, b->tele_rr);
-		if (st == ICOM_ST_BYPASS) {
+		if ((st == ICOM_ST_BYPASS) || (!b->up_audio)) {
 			b->up.nch = 0U;
 		} else {
 			b->up.nch = 1U;

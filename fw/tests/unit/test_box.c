@@ -172,6 +172,11 @@ void test_box(void)
 		if (last_up.tele_id == 0) CHECK_EQ(last_up.tele >> 8, ICOM_WHY_NONE);
 	}
 
+	/* uplink without microphone audio when up_audio is off (telemetry only) */
+	box.up_audio = false;
+	CHECK_EQ(tick(0, 0.0), ICOM_HDR_LEN + ICOM_UP_FIX + ICOM_CRC_LEN);
+	box.up_audio = true;
+
 	/* CB-24: critical BIT -> latched BYPASS */
 	run(5, 0, 1, ICOM_BIT_CODEC);
 	CHECK_EQ(box.modes.state, ICOM_ST_BYPASS);

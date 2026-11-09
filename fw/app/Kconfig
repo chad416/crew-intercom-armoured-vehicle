@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: MIT
+mainmenu "Crew-box firmware"
+
+config ICOM_TEST_HOOKS
+	bool "Test hooks"
+	help
+	  Replaces the codec with an acoustic plant model (track tones plus the
+	  delayed anti-noise) and adds fault-injection variables written by the
+	  Renode rig through the ELF symbols: BIT bits, a processor stall.
+	  Test image only (test.conf).
+
+source "Kconfig.zephyr"

@@ -47,6 +47,9 @@ void test_link(void)
 	CHECK_EQ(l.missed_run, 4);
 	CHECK_EQ(l.good_run, 0);
 	CHECK_EQ(l.concealed, 3);
+	CHECK_EQ(l.lost_total, 2); /* missing ticks are not counted twice */
+	d = mk(18, 0, 0);          /* 14..17 missing: the gap counts them once */
+	icom_link_tick(&l, &d, &pc);
 	CHECK_EQ(l.lost_total, 6);
 
 	/* sequence wraps 255 -> 0 without a false loss */

@@ -1,0 +1,204 @@
+{
+ "limits": {
+  "sidetone": [
+   10.0,
+   "half of the 20 ms own-voice 'disturbing' delay [R20][R21]"
+  ],
+  "intercom": [
+   20.0,
+   "co-located crew; own-voice disturbance limit 20 ms used as a proxy [R20][R21] (A)"
+  ],
+  "radio_box": [
+   10.0,
+   "share of the 150 ms G.114 mouth-to-ear budget given to the intercom [R24] (A)"
+  ]
+ },
+ "sidetone": {
+  "elements": [
+   [
+    "ADC decimation filter",
+    1.062,
+    "17/fs [R37]"
+   ],
+   [
+    "input DMA frame",
+    1.0,
+    "one frame is collected before processing"
+   ],
+   [
+    "processing",
+    1.0,
+    "worst case: processing may use the whole frame"
+   ],
+   [
+    "output DMA frame",
+    1.0,
+    "one frame queued for the codec"
+   ],
+   [
+    "DAC interpolation filter",
+    1.312,
+    "21/fs [R37]"
+   ]
+  ],
+  "total_ms": 5.375,
+  "limit_ms": 10.0,
+  "margin_ms": 4.625,
+  "margin_pct": 46.2
+ },
+ "intercom_A1": {
+  "elements": [
+   [
+    "analog bus",
+    0.0,
+    "wire, propagation < 1 us"
+   ]
+  ],
+  "total_ms": 0.0,
+  "limit_ms": 20.0,
+  "margin_ms": 20.0,
+  "margin_pct": 100.0
+ },
+ "intercom_A2": {
+  "elements": [
+   [
+    "ADC decimation filter",
+    1.062,
+    "17/fs [R37]"
+   ],
+   [
+    "input DMA frame",
+    1.0,
+    "frame collection"
+   ],
+   [
+    "box processing",
+    1.0,
+    "frame worst case"
+   ],
+   [
+    "uplink slot wait",
+    1.0,
+    "TDM: up to one frame"
+   ],
+   [
+    "uplink transmission",
+    0.047,
+    "470 bits at 10 Mbit/s"
+   ],
+   [
+    "CCU mixing",
+    1.0,
+    "one frame, all boxes aligned"
+   ],
+   [
+    "downlink transmission",
+    0.143,
+    "1430 bits"
+   ],
+   [
+    "box jitter / concealment buffer",
+    1.0,
+    "one frame held for loss concealment"
+   ],
+   [
+    "output DMA frame",
+    1.0,
+    "frame queued for the codec"
+   ],
+   [
+    "DAC interpolation filter",
+    1.312,
+    "21/fs [R37]"
+   ]
+  ],
+  "total_ms": 8.565,
+  "limit_ms": 20.0,
+  "margin_ms": 11.435,
+  "margin_pct": 57.2
+ },
+ "intercom_A3": {
+  "elements": [
+   [
+    "ADC decimation filter",
+    1.062,
+    "17/fs [R37]"
+   ],
+   [
+    "input DMA frame",
+    1.0,
+    "frame collection"
+   ],
+   [
+    "box processing + packetising",
+    1.0,
+    "frame worst case"
+   ],
+   [
+    "network transit, bounded",
+    2.0,
+    "AVB/TSN class A bound, 7 hops [R36]"
+   ],
+   [
+    "presentation-time alignment",
+    0.0,
+    "included in the 2 ms bound"
+   ],
+   [
+    "distributed mixing in the listener's box",
+    1.0,
+    "one frame"
+   ],
+   [
+    "output DMA frame",
+    1.0,
+    "frame queued for the codec"
+   ],
+   [
+    "DAC interpolation filter",
+    1.312,
+    "21/fs [R37]"
+   ]
+  ],
+  "total_ms": 8.375,
+  "limit_ms": 20.0,
+  "margin_ms": 11.625,
+  "margin_pct": 58.1
+ },
+ "frame_sensitivity": {
+  "frame_ms": [
+   0.5,
+   1.0,
+   2.0,
+   4.0,
+   8.0
+  ],
+  "sidetone": [
+   3.875,
+   5.375,
+   8.375,
+   14.375,
+   26.375
+  ],
+  "A2": [
+   5.485,
+   8.565,
+   14.725,
+   27.045,
+   51.685
+  ],
+  "A3": [
+   6.375,
+   8.375,
+   12.375,
+   20.375,
+   36.375
+  ]
+ },
+ "converters": {
+  "16k_A": 2.375,
+  "48k_A": 0.792,
+  "192k_C": 0.125
+ },
+ "fig": "C:\\Users\\chand\\Downloads\\New CLI\\SW_PROJECTS\\10_crew-intercom-armoured-vehicle\\docs\\img\\s4_budget.png"
+}

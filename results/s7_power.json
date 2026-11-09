@@ -1,0 +1,14 @@
+{
+ "p_load_w": 6.0,
+ "v_clamp": 33.0,
+ "mosfet_peak_w": 87.48684956702874,
+ "mosfet_energy_j": 6.8642335712640845,
+ "vout_max": 32.99090658514564,
+ "tvs_if_clamped_at_36v_energy_j": 230.4,
+ "spike_energy_max_j": 2.0,
+ "holdup_c_for_IES_1s_f": 0.022727272727272728,
+ "holdup_c_for_50ms_dropout_f": 0.0008534850640113799,
+ "ies_ok_with_wide_input": true,
+ "cranking_ok": true,
+ "fig": "C:\\Users\\chand\\Downloads\\New CLI\\SW_PROJECTS\\10_crew-intercom-armoured-vehicle\\docs\\img\\s7_power.png"
+}

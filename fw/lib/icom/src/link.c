@@ -55,9 +55,11 @@ uint8_t icom_link_tick(icom_link_t *l, const icom_down_t *frame, icom_chans_t *p
 		l->last_flags = frame->flags;
 		flags = frame->flags;
 	} else {
+		/* lost_total counts sequence gaps only: a tick without a frame is
+		 * counted when the next frame shows the gap (IT04 found the double
+		 * count of the first version) */
 		l->missed_run++;
 		l->good_run = 0U;
-		l->lost_total++;
 		if (l->missed_run <= ICOM_PLC_FRAMES) {
 			l->concealed++;
 			flags = l->last_flags;

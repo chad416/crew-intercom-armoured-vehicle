@@ -1,0 +1,14 @@
+:name: Crew box
+:description: crew-box firmware on the MIMXRT1064-EVK model.
+
+# Required: $elf (path to zephyr.elf). The scripts and the Robot tests set it.
+
+$name?="icom"
+mach create $name
+machine LoadPlatformDescription $ORIGIN/icom_board.repl
+
+# 20 us quantum: the CCU emulator sends one bus frame per millisecond.
+emulation SetGlobalQuantum "0.00002"
+
+sysbus LoadELF $elf
+cpu VectorTableOffset `sysbus GetSymbolAddress "_vector_table"`

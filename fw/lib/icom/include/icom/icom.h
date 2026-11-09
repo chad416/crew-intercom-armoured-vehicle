@@ -106,7 +106,7 @@ typedef struct {
 	uint8_t last_seq;
 	uint32_t missed_run;  /* consecutive ticks without a valid frame */
 	uint32_t good_run;    /* consecutive ticks with a valid frame */
-	uint32_t lost_total;  /* frames lost by sequence gaps or missing ticks */
+	uint32_t lost_total;  /* frames lost: gaps in the sequence numbers */
 	uint32_t concealed;
 	int16_t last_pcm[ICOM_NCH][ICOM_N];
 	uint8_t last_flags;
@@ -248,6 +248,7 @@ typedef struct {
 	icom_up_t up;
 	icom_up_t rx_up;        /* uplink frames seen on the bus (ignored) */
 	bool rx_valid;
+	bool up_audio;          /* send microphone audio in the uplink (default true) */
 	uint8_t bits;
 	uint8_t tele_rr;
 	uint16_t speed_cckmh;

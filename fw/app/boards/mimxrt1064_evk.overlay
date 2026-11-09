@@ -1,0 +1,21 @@
+/*
+ * Crew-box I/O on the MIMXRT1064-EVK.
+ * SPDX-License-Identifier: MIT
+ */
+#include <zephyr/dt-bindings/gpio/gpio.h>
+
+/ {
+	chosen {
+		icom,bus-uart = &lpuart3; /* Arduino D0/D1; RS-485 transceiver on real hardware */
+	};
+
+	zephyr,user {
+		/* Bypass relay drive (charge pump input): the EVK's green user LED. */
+		relay-gpios = <&gpio1 9 GPIO_ACTIVE_LOW>;
+	};
+};
+
+&lpuart3 {
+	status = "okay";
+	current-speed = <115200>;
+};
