@@ -54,21 +54,33 @@ def intercom_path(arch, fs=16000.0, frame_ms=1.0, bitrate=10e6, n_boxes=6, filt=
         # point-to-point RS-485 per box (star), TDM frame = one audio frame
         up_bits = (4 + 9 + 2 * int(fs * frame_ms / 1e3) + 2) * 10  # 8N1 bytes
         dn_bits = (4 + 9 + 4 * 2 * int(fs * frame_ms / 1e3) + 2) * 10
-        return head + [
-            Element("box processing", frame_ms, "frame worst case"),
-            Element("uplink slot wait", frame_ms, "TDM: up to one frame"),
-            Element("uplink transmission", up_bits / bitrate * 1e3, "%d bits at %.0f Mbit/s" % (up_bits, bitrate / 1e6)),
-            Element("CCU mixing", frame_ms, "one frame, all boxes aligned"),
-            Element("downlink transmission", dn_bits / bitrate * 1e3, "%d bits" % dn_bits),
-            Element("box jitter / concealment buffer", frame_ms, "one frame held for loss concealment"),
-        ] + tail
+        return (
+            head
+            + [
+                Element("box processing", frame_ms, "frame worst case"),
+                Element("uplink slot wait", frame_ms, "TDM: up to one frame"),
+                Element(
+                    "uplink transmission",
+                    up_bits / bitrate * 1e3,
+                    "%d bits at %.0f Mbit/s" % (up_bits, bitrate / 1e6),
+                ),
+                Element("CCU mixing", frame_ms, "one frame, all boxes aligned"),
+                Element("downlink transmission", dn_bits / bitrate * 1e3, "%d bits" % dn_bits),
+                Element("box jitter / concealment buffer", frame_ms, "one frame held for loss concealment"),
+            ]
+            + tail
+        )
     if arch == "A3":
-        return head + [
-            Element("box processing + packetising", frame_ms, "frame worst case"),
-            Element("network transit, bounded", 2.0, "AVB/TSN class A bound, 7 hops [R36]"),
-            Element("presentation-time alignment", 0.0, "included in the 2 ms bound"),
-            Element("distributed mixing in the listener's box", frame_ms, "one frame"),
-        ] + tail
+        return (
+            head
+            + [
+                Element("box processing + packetising", frame_ms, "frame worst case"),
+                Element("network transit, bounded", 2.0, "AVB/TSN class A bound, 7 hops [R36]"),
+                Element("presentation-time alignment", 0.0, "included in the 2 ms bound"),
+                Element("distributed mixing in the listener's box", frame_ms, "one frame"),
+            ]
+            + tail
+        )
     raise ValueError(arch)
 
 

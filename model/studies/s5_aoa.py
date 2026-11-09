@@ -17,19 +17,24 @@ import json
 import os
 
 import numpy as np
-
-from common import RES, plt, save, dump  # noqa: F401
+from common import RES, dump, plt, save  # noqa: F401
 from icsim import budget, chain, data, rma
 
 ALTS = ["A1", "A2", "A3"]
-NAMES = {"A1": "A1 analog party line", "A2": "A2 digital star (RS-485 TDM)", "A3": "A3 TSN, distributed mixing"}
+NAMES = {
+    "A1": "A1 analog party line",
+    "A2": "A2 digital star (RS-485 TDM)",
+    "A3": "A3 TSN, distributed mixing",
+}
 
 
 def measured():
     # fail-operational: loss of commander-driver voice per 1e6 12-h missions (S6)
-    loss = {"A1": rma.mission_reliability("A1", 12.0, 0.9, False),
-            "A2": rma.mission_reliability("A2", 12.0, 0.9, True),
-            "A3": rma.mission_reliability("A3", 12.0, 0.9, True)}
+    loss = {
+        "A1": rma.mission_reliability("A1", 12.0, 0.9, False),
+        "A2": rma.mission_reliability("A2", 12.0, 0.9, True),
+        "A3": rma.mission_reliability("A3", 12.0, 0.9, True),
+    }
     loss = {k: (1 - v) * 1e6 for k, v in loss.items()}
     # latency: worst-case crew-to-crew delay (S4); analog = 0
     lat = {a: budget.total(budget.intercom_path(a)) for a in ALTS}
@@ -37,14 +42,18 @@ def measured():
     # open microphone: with 4 live mics the transmitted noise is +6 dB (A: no gating).
     base = chain.Config("x", anr_bb=True)
     sti_dig = chain.best_operating_point(base)["sti_max"]
-    sti_ana = chain.best_operating_point(chain.Config("x", anr_bb=True, codec="wb",
-                                                      mic_rej=data.MIC_REJ - 6.0))["sti_max"]
+    sti_ana = chain.best_operating_point(
+        chain.Config("x", anr_bb=True, codec="wb", mic_rej=data.MIC_REJ - 6.0)
+    )["sti_max"]
     sti = {"A1": sti_ana, "A2": sti_dig, "A3": sti_dig}
     # harness: conductor-metres for 6 crew stations (layout assumption A): average run 3 m
     runs = 6 * 3.0
-    cond = {"A1": runs * 2 * 6 + 6 * 2 * 2,  # 6 balanced pairs daisy-chained (icom, 2 radios, alarm, PTT, emerg) + power
-            "A2": runs * (4 + 2 + 2),  # RS-485 2 pairs + power pair + emergency pair
-            "A3": runs * (4 + 2 + 2)}  # 100BASE-TX 2 pairs + power + emergency pair
+    cond = {
+        "A1": runs * 2 * 6
+        + 6 * 2 * 2,  # 6 balanced pairs daisy-chained (icom, 2 radios, alarm, PTT, emerg) + power
+        "A2": runs * (4 + 2 + 2),  # RS-485 2 pairs + power pair + emergency pair
+        "A3": runs * (4 + 2 + 2),
+    }  # 100BASE-TX 2 pairs + power + emergency pair
     return {"loss_per_1e6": loss, "latency_ms": lat, "sti": sti, "conductor_m": cond}
 
 
@@ -72,14 +81,23 @@ JUDGED = {
     },
 }
 
-WEIGHTS = {"fail-operational": 10, "intelligibility": 9, "latency": 7, "EMC robustness": 7,
-           "harness mass": 5, "growth": 4, "cost and complexity": 5}
+WEIGHTS = {
+    "fail-operational": 10,
+    "intelligibility": 9,
+    "latency": 7,
+    "EMC robustness": 7,
+    "harness mass": 5,
+    "growth": 4,
+    "cost and complexity": 5,
+}
 
 
 def scores(m):
     s = {
         "fail-operational": {a: utility(m["loss_per_1e6"][a], 1000.0, 10.0) for a in ALTS},
-        "intelligibility": {a: utility(m["sti"][a], data.STI_THRESHOLD - 0.05, data.STI_OBJECTIVE) for a in ALTS},
+        "intelligibility": {
+            a: utility(m["sti"][a], data.STI_THRESHOLD - 0.05, data.STI_OBJECTIVE) for a in ALTS
+        },
         "latency": {a: utility(m["latency_ms"][a], 20.0, 0.0) for a in ALTS},
         "harness mass": {a: utility(m["conductor_m"][a], 300.0, 100.0) for a in ALTS},
     }
@@ -115,19 +133,29 @@ def main():
         t = total(s, dict(zip(keys, wv)))
         wins[max(t, key=t.get)] += 1
     win_pct = {a: 100.0 * n / len(draws) for a, n in wins.items()}
-    res = {"measured": m, "scores": s, "weights": WEIGHTS, "total": tot, "oat_winner": oat,
-           "mc_win_pct": win_pct, "judged_reasons": {k: {a: v[a][1] for a in ALTS} for k, v in JUDGED.items()}}
+    res = {
+        "measured": m,
+        "scores": s,
+        "weights": WEIGHTS,
+        "total": tot,
+        "oat_winner": oat,
+        "mc_win_pct": win_pct,
+        "judged_reasons": {k: {a: v[a][1] for a in ALTS} for k, v in JUDGED.items()},
+    }
 
     fig, axs = plt.subplots(1, 2, figsize=(9, 3.4))
     crit = list(WEIGHTS)
     x = np.arange(len(crit))
     for i, a in enumerate(ALTS):
         axs[0].bar(x + (i - 1) * 0.27, [s[c][a] for c in crit], 0.27, label=NAMES[a])
-    axs[0].set_xticks(x, [c.replace(" ", "\n") for c in crit], fontsize=7)
+    short = {"fail-operational": "fail-\noperational", "intelligibility": "intelli-\ngibility"}
+    axs[0].set_xticks(x, [short.get(c, c.replace(" ", "\n")) for c in crit], fontsize=6.5)
     axs[0].set_ylabel("utility score (1-10)")
-    axs[0].set_title("Scores per criterion (weights: %s)" % "/".join(str(WEIGHTS[c]) for c in crit), fontsize=8)
-    axs[0].legend(fontsize=7, loc="lower left")
-    axs[1].bar([NAMES[a] for a in ALTS], [tot[a] for a in ALTS], color=["#4f5d75", "#2a6f97", "#66a182"])
+    axs[0].set_title(
+        "Scores per criterion (weights: %s)" % "/".join(str(WEIGHTS[c]) for c in crit), fontsize=8
+    )
+    axs[0].legend(fontsize=7, loc="upper center", bbox_to_anchor=(0.5, -0.28), ncol=3)
+    axs[1].bar(ALTS, [tot[a] for a in ALTS], color=["#4f5d75", "#2a6f97", "#66a182"])
     for i, a in enumerate(ALTS):
         axs[1].text(i, tot[a] + 0.1, "%.2f\nwins %.0f %%" % (tot[a], win_pct[a]), ha="center", fontsize=7)
     axs[1].set_ylim(0, 10)
@@ -136,9 +164,17 @@ def main():
     axs[1].tick_params(axis="x", labelsize=7)
     res["fig"] = save(fig, "s5_aoa.png")
     dump("s5_aoa.json", res)
-    print(json.dumps({"measured": {k: {a: round(v, 3) for a, v in d.items()} for k, d in m.items()},
-                      "total": {a: round(v, 2) for a, v in tot.items()}, "mc": win_pct,
-                      "oat_flips": {k: v for k, v in oat.items() if v != max(tot, key=tot.get)}}, indent=1))
+    print(
+        json.dumps(
+            {
+                "measured": {k: {a: round(v, 3) for a, v in d.items()} for k, d in m.items()},
+                "total": {a: round(v, 2) for a, v in tot.items()},
+                "mc": win_pct,
+                "oat_flips": {k: v for k, v in oat.items() if v != max(tot, key=tot.get)},
+            },
+            indent=1,
+        )
+    )
     _ = os
 
 

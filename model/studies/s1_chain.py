@@ -9,8 +9,7 @@ from __future__ import annotations
 from dataclasses import replace
 
 import numpy as np
-
-from common import plt, save, dump  # noqa: F401  (path setup)
+from common import dump, plt, save  # noqa: F401  (path setup)
 from icsim import chain, data
 
 CONFIGS = [
@@ -20,8 +19,10 @@ CONFIGS = [
     ("C3 C2 + tonal ANR (20 dB)", dict(anr_bb=True, anr_tonal_db=20.0)),
     ("C4 C3 + 32 kHz codec", dict(anr_bb=True, anr_tonal_db=20.0, codec="swb")),
     ("C5 C3 + mic +3 dB", dict(anr_bb=True, anr_tonal_db=20.0, mic_rej=data.MIC_REJ + 3.0)),
-    ("C6 C5 + earplug +10 dB", dict(anr_bb=True, anr_tonal_db=20.0, mic_rej=data.MIC_REJ + 3.0,
-                                    passive_extra_db=10.0)),
+    (
+        "C6 C5 + earplug +10 dB",
+        dict(anr_bb=True, anr_tonal_db=20.0, mic_rej=data.MIC_REJ + 3.0, passive_extra_db=10.0),
+    ),
 ]
 
 
@@ -44,8 +45,14 @@ def fig_spectra():
         ax.set_xlabel("octave band (Hz)")
         ax.set_title(data.NOISE[v]["label"], fontsize=9)
         lev = [chain.a_level(y) for _, y in series]
-        ax.text(0.02, 0.97, "dB(A): " + " / ".join("%.1f" % v for v in lev), transform=ax.transAxes,
-                va="top", fontsize=8)
+        ax.text(
+            0.02,
+            0.97,
+            "dB(A): " + " / ".join("%.1f" % v for v in lev),
+            transform=ax.transAxes,
+            va="top",
+            fontsize=8,
+        )
     axs[0].set_ylabel("SPL (dB re 20 uPa)")
     axs[1].legend(fontsize=7, loc="upper right")
     return save(fig, "s1_spectra.png")
@@ -76,8 +83,11 @@ def fig_sti_vs_level(vehicle="tracked"):
     axs[1].axhline(data.TWA_LIMIT_DBA, color="k", ls="--", lw=0.8)
     axs[1].set_ylabel("8-h TWA at the ear (dB(A))")
     axs[1].legend(fontsize=6.5, loc="upper left")
-    fig.suptitle("Tracked vehicle 111 dB(A): STI and noise dose against earphone level "
-                 "(grey: above the 115 dB peak limit)", fontsize=9)
+    fig.suptitle(
+        "Tracked vehicle 111 dB(A): STI and noise dose against earphone level "
+        "(grey: above the 115 dB peak limit)",
+        fontsize=9,
+    )
     return save(fig, "s1_sti_vs_level.png"), out
 
 
@@ -98,8 +108,15 @@ def fig_tx_heatmap():
     axs[0].set_title("best reachable STI (tracked, C3)", fontsize=9)
     for i in range(len(efforts)):
         for j in range(len(dists)):
-            axs[0].text(j, i, "%.2f" % grid[i, j], ha="center", va="center", fontsize=7,
-                        color="w" if grid[i, j] < 0.5 else "k")
+            axs[0].text(
+                j,
+                i,
+                "%.2f" % grid[i, j],
+                ha="center",
+                va="center",
+                fontsize=7,
+                color="w" if grid[i, j] < 0.5 else "k",
+            )
     fig.colorbar(im, ax=axs[0], fraction=0.04)
     s, n = chain.mic_levels(base)
     bands = ["125", "250", "500", "1k", "2k", "4k", "8k"]
@@ -108,8 +125,12 @@ def fig_tx_heatmap():
     axs[1].set_ylabel("transmit SNR at the mic (dB)")
     axs[1].set_xlabel("octave band (Hz)")
     axs[1].set_title("raised voice, 1.5 cm, pressure-gradient mic", fontsize=9)
-    return save(fig, "s1_transmit.png"), {"dists_cm": dists, "efforts": efforts, "sti_max": grid,
-                                          "tx_snr_raised_1p5cm": s - n}
+    return save(fig, "s1_transmit.png"), {
+        "dists_cm": dists,
+        "efforts": efforts,
+        "sti_max": grid,
+        "tx_snr_raised_1p5cm": s - n,
+    }
 
 
 COL_NEG = "#d1495b"
@@ -125,11 +146,13 @@ def fig_vs_vehicle_level():
             xs, ys = [], []
             for sh in shifts:
                 c = chain.Config(name, vehicle=v, level_shift_db=float(sh), **kw)
-                r = chain.best_operating_point(c)
                 xs.append(chain.a_level(chain.cab_noise(c)))
                 # best STI that also respects the 8-h TWA
-                rows = [x for x in chain.sweep_level(c) if x["peak_db"] <= data.PEAK_AT_EAR_DB
-                        and x["twa_dba"] < data.TWA_LIMIT_DBA]
+                rows = [
+                    x
+                    for x in chain.sweep_level(c)
+                    if x["peak_db"] <= data.PEAK_AT_EAR_DB and x["twa_dba"] < data.TWA_LIMIT_DBA
+                ]
                 ys.append(max([x["sti"] for x in rows], default=np.nan))
             ax.plot(xs, ys, marker=".", label=name)
             out["%s|%s" % (v, name)] = {"dba": xs, "sti_dose_ok": ys}
@@ -153,12 +176,19 @@ def table_operating_points():
             m = chain.max_vehicle_level(c)
             # hours allowed at the operating point (equal-energy rule)
             hours = 8.0 * 10 ** ((data.TWA_LIMIT_DBA - r["twa_dba"]) / 10.0)
-            rows.append({
-                "vehicle": v, "config": name, "noise_ear_dba": r["noise_ear_dba"],
-                "sti_max": r["sti_max"], "reached_0p41": r["reached"], "speech_ear_dba": r["speech_ear_dba"],
-                "twa_8h": r["twa_dba"], "hours_allowed": hours,
-                "max_vehicle_dba_0p41_dose_ok": None if m is None else m[0],
-            })
+            rows.append(
+                {
+                    "vehicle": v,
+                    "config": name,
+                    "noise_ear_dba": r["noise_ear_dba"],
+                    "sti_max": r["sti_max"],
+                    "reached_0p41": r["reached"],
+                    "speech_ear_dba": r["speech_ear_dba"],
+                    "twa_8h": r["twa_dba"],
+                    "hours_allowed": hours,
+                    "max_vehicle_dba_0p41_dose_ok": None if m is None else m[0],
+                }
+            )
     return rows
 
 
@@ -172,9 +202,20 @@ def main():
     res["cab_dba"] = {v: chain.a_level(data.NOISE[v]["oct"]) for v in ("tracked", "wheeled")}
     dump("s1_chain.json", res)
     for r in res["table"]:
-        print("%-8s %-28s ear %5.1f  STImax %.3f  hit %-5s  L %5.1f  TWA %5.1f  h %5.1f  maxveh %s" % (
-            r["vehicle"], r["config"], r["noise_ear_dba"], r["sti_max"], r["reached_0p41"], r["speech_ear_dba"],
-            r["twa_8h"], r["hours_allowed"], r["max_vehicle_dba_0p41_dose_ok"] and round(r["max_vehicle_dba_0p41_dose_ok"], 1)))
+        print(
+            "%-8s %-28s ear %5.1f  STImax %.3f  hit %-5s  L %5.1f  TWA %5.1f  h %5.1f  maxveh %s"
+            % (
+                r["vehicle"],
+                r["config"],
+                r["noise_ear_dba"],
+                r["sti_max"],
+                r["reached_0p41"],
+                r["speech_ear_dba"],
+                r["twa_8h"],
+                r["hours_allowed"],
+                r["max_vehicle_dba_0p41_dose_ok"] and round(r["max_vehicle_dba_0p41_dose_ok"], 1),
+            )
+        )
 
 
 if __name__ == "__main__":

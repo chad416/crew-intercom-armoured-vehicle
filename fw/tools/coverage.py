@@ -110,7 +110,8 @@ def main():
     print(hdr)
     for r in rows + [("TOTAL",) + tuple(tot)]:
         print(
-            f"{r[0]:<14} {r[1]:>5}/{r[2]:<4}{pct(r[1], r[2]):5.1f}% {r[3]:>5}/{r[4]:<4}{pct(r[3], r[4]):5.1f}%"
+            f"{r[0]:<14} {r[1]:>5}/{r[2]:<4}{pct(r[1], r[2]):5.1f}%"
+            f" {r[3]:>5}/{r[4]:<4}{pct(r[3], r[4]):5.1f}%"
             f" {r[5]:>5}/{r[6]:<4}{pct(r[5], r[6]):6.1f}%"
         )
     for m in missing:
@@ -121,7 +122,8 @@ def main():
             f.write("| File | Lines | Branches | MC/DC condition outcomes |\n|---|---|---|---|\n")
             for r in rows + [("**Total**",) + tuple(tot)]:
                 f.write(
-                    f"| {r[0]} | {r[1]}/{r[2]} ({pct(r[1], r[2]):.1f} %) | {r[3]}/{r[4]} ({pct(r[3], r[4]):.1f} %)"
+                    f"| {r[0]} | {r[1]}/{r[2]} ({pct(r[1], r[2]):.1f} %)"
+                    f" | {r[3]}/{r[4]} ({pct(r[3], r[4]):.1f} %)"
                     f" | {r[5]}/{r[6]} ({pct(r[5], r[6]):.1f} %) |\n"
                 )
 

@@ -13,9 +13,8 @@
 import clr
 
 clr.AddReference("System")
-from System import Action  # noqa: E402
-
 from Antmicro.Renode.Time import TimeInterval  # noqa: E402
+from System import Action  # noqa: E402
 
 SYNC0, SYNC1, T_DOWN, T_UP = 0xA5, 0x5A, 0x01, 0x81
 RELAY_HOLD_MS = 2.0
@@ -31,8 +30,17 @@ def crc16(data):
 
 
 def down_frame(seq, speed_ckmh, cmd=0, arg=0, mode=0, flags=0):
-    p = [seq & 0xFF, mode, flags, (speed_ckmh >> 8) & 0xFF, speed_ckmh & 0xFF, cmd,
-         (arg >> 8) & 0xFF, arg & 0xFF, 0]
+    p = [
+        seq & 0xFF,
+        mode,
+        flags,
+        (speed_ckmh >> 8) & 0xFF,
+        speed_ckmh & 0xFF,
+        cmd,
+        (arg >> 8) & 0xFF,
+        arg & 0xFF,
+        0,
+    ]
     body = [len(p), T_DOWN] + p
     c = crc16(body)
     return [SYNC0, SYNC1] + body + [c >> 8, c & 0xFF]

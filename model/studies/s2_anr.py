@@ -14,8 +14,7 @@ Outputs: docs/img/s2_*.png, results/s2_anr.json
 from __future__ import annotations
 
 import numpy as np
-
-from common import plt, save, dump  # noqa: F401
+from common import dump, plt, save  # noqa: F401
 from icsim import anr, chain, data
 
 FS = 4000
@@ -32,7 +31,9 @@ def linewidth_sigma(hz):
     return float(np.sqrt(2 * np.pi * hz / FS)) if hz > 0 else 0.0
 
 
-def scenario(seconds, speed=40.0, lw_hz=0.0, speed_err=0.0, bb_db=None, seed=1, jitter_kmh=0.2, ref="sprocket"):
+def scenario(
+    seconds, speed=40.0, lw_hz=0.0, speed_err=0.0, bb_db=None, seed=1, jitter_kmh=0.2, ref="sprocket"
+):
     """Tonal track noise for a speed profile with random speed jitter (FM of the tones).
 
     ref="sprocket": the controller gets the track-link phase from a sprocket pulse pick-up,
@@ -55,8 +56,9 @@ def scenario(seconds, speed=40.0, lw_hz=0.0, speed_err=0.0, bb_db=None, seed=1, 
         b, a = butter(2, [40, 600], btype="bandpass", fs=FS)
         x = lfilter(b, a, rng.standard_normal(n))
         bb = x * (20e-6 * 10 ** (bb_db / 20) / np.std(x))
-    d, f0, _ = anr.track_noise(FS, seconds, v, PITCH, HARM_DB, broadband=bb, rng=rng,
-                               phase_noise=linewidth_sigma(lw_hz))
+    d, f0, _ = anr.track_noise(
+        FS, seconds, v, PITCH, HARM_DB, broadband=bb, rng=rng, phase_noise=linewidth_sigma(lw_hz)
+    )
     if ref == "sprocket":
         f0_meas = f0 * (1.0 + speed_err)
     else:
@@ -82,7 +84,7 @@ def study_a():
     for mu in (0.001, 0.003, 0.01, 0.03):
         r = anr.harmonic_fxlms(d, f0m, FS, path, 3, mu=mu)
         e2 = np.convolve(r["e"] ** 2, np.ones(win) / win, mode="valid")
-        d2 = np.convolve(d ** 2, np.ones(win) / win, mode="valid")
+        d2 = np.convolve(d**2, np.ones(win) / win, mode="valid")
         att = 10 * np.log10(d2 / e2)
         tt = (np.arange(len(att)) + win / 2) / FS
         ax.plot(tt, att, label="mu = %g" % mu)

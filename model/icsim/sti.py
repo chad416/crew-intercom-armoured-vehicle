@@ -124,7 +124,7 @@ def stipa_signal(band_levels_db, fs, seconds, rng):
     t = np.arange(n) / fs
     out = np.zeros(n)
     for k, fc in enumerate(BANDS):
-        lo, hi = fc / 2 ** 0.25, min(fc * 2 ** 0.25, 0.45 * fs)
+        lo, hi = fc / 2**0.25, min(fc * 2**0.25, 0.45 * fs)
         sos = signal.butter(4, [lo, hi], btype="bandpass", fs=fs, output="sos")
         car = signal.sosfilt(sos, rng.standard_normal(n))
         f1, f2 = STIPA_FM[k]

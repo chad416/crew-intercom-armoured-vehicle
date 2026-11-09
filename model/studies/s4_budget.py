@@ -5,8 +5,7 @@ plus the frame-length sensitivity.  Outputs: docs/img/s4_budget.png, results/s4_
 from __future__ import annotations
 
 import numpy as np
-
-from common import plt, save, dump  # noqa: F401
+from common import dump, plt, save  # noqa: F401
 from icsim import budget
 
 LIM = {k: v[0] for k, v in budget.LIMITS_MS.items()}
@@ -35,14 +34,22 @@ def main():
     }
 
     fig, axs = plt.subplots(1, 2, figsize=(9, 3.4))
-    paths = [("sidetone (local)", budget.sidetone_path(), LIM["sidetone"]),
-             ("A2 star TDM", budget.intercom_path("A2"), LIM["intercom"]),
-             ("A3 TSN, distributed mix", budget.intercom_path("A3"), LIM["intercom"])]
+    paths = [
+        ("sidetone (local)", budget.sidetone_path(), LIM["sidetone"]),
+        ("A2 star TDM", budget.intercom_path("A2"), LIM["intercom"]),
+        ("A3 TSN, distributed mix", budget.intercom_path("A3"), LIM["intercom"]),
+    ]
     for i, (lab, el, lim) in enumerate(paths):
         left = 0.0
         for j, e in enumerate(el):
-            axs[0].barh(i, e.ms, left=left, color=plt.rcParams["axes.prop_cycle"].by_key()["color"][j % 7],
-                        edgecolor="w", lw=0.5)
+            axs[0].barh(
+                i,
+                e.ms,
+                left=left,
+                color=plt.rcParams["axes.prop_cycle"].by_key()["color"][j % 7],
+                edgecolor="w",
+                lw=0.5,
+            )
             left += e.ms
         axs[0].plot([lim, lim], [i - 0.4, i + 0.4], color="k", lw=1.5)
         axs[0].text(left + 0.2, i, "%.1f ms (limit %g)" % (left, lim), va="center", fontsize=7)

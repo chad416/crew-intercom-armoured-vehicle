@@ -14,8 +14,7 @@ Outputs: docs/img/s7_power.png, results/s7_power.json
 from __future__ import annotations
 
 import numpy as np
-
-from common import plt, save, dump  # noqa: F401
+from common import dump, plt, save  # noqa: F401
 
 P_LOAD = 6.0  # W, crew box with headset (assumption A)
 V_CLAMP = 33.0  # surge-stopper output clamp, top of the 1275E steady-state range
@@ -61,16 +60,19 @@ def simulate():
 def main():
     t, vs, vo, pq, eq = simulate()
     res = {
-        "p_load_w": P_LOAD, "v_clamp": V_CLAMP,
-        "mosfet_peak_w": float(pq.max()), "mosfet_energy_j": float(eq[-1]),
+        "p_load_w": P_LOAD,
+        "v_clamp": V_CLAMP,
+        "mosfet_peak_w": float(pq.max()),
+        "mosfet_energy_j": float(eq[-1]),
         "vout_max": float(vo.max()),
         # TVS must stand off the 100 V surge (else it would conduct (100 - Vc)/0.5 ohm for 50 ms)
         "tvs_if_clamped_at_36v_energy_j": float((100 - 36) / R_SRC * 36 * 0.05),
         "spike_energy_max_j": 2.0,
         # hold-up needed without a wide-input converter, from 28 V down to 16 V
-        "holdup_c_for_IES_1s_f": 2 * P_LOAD * 1.0 / (28.0 ** 2 - 16.0 ** 2),
-        "holdup_c_for_50ms_dropout_f": 2 * P_LOAD * 0.05 / (28.0 ** 2 - DCDC_VMIN ** 2),
-        "ies_ok_with_wide_input": 12.0 > DCDC_VMIN, "cranking_ok": 16.0 > DCDC_VMIN,
+        "holdup_c_for_IES_1s_f": 2 * P_LOAD * 1.0 / (28.0**2 - 16.0**2),
+        "holdup_c_for_50ms_dropout_f": 2 * P_LOAD * 0.05 / (28.0**2 - DCDC_VMIN**2),
+        "ies_ok_with_wide_input": 12.0 > DCDC_VMIN,
+        "cranking_ok": 16.0 > DCDC_VMIN,
     }
     fig, axs = plt.subplots(1, 2, figsize=(9, 3.2))
     axs[0].plot(t * 1e3, vs, label="1275E surge envelope (source)")
@@ -86,8 +88,9 @@ def main():
     ax2.set_ylabel("J")
     axs[1].set_xlabel("time (ms)")
     axs[1].set_ylabel("W")
-    axs[1].set_title("MOSFET stress: %.1f W peak, %.2f J" % (res["mosfet_peak_w"], res["mosfet_energy_j"]),
-                     fontsize=9)
+    axs[1].set_title(
+        "MOSFET stress: %.1f W peak, %.2f J" % (res["mosfet_peak_w"], res["mosfet_energy_j"]), fontsize=9
+    )
     res["fig"] = save(fig, "s7_power.png")
     dump("s7_power.json", res)
     print({k: (round(v, 4) if isinstance(v, float) else v) for k, v in res.items()})

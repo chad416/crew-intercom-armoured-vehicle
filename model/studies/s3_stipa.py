@@ -16,8 +16,7 @@ Outputs: docs/img/s3_stipa.png, results/s3_stipa.json
 from __future__ import annotations
 
 import numpy as np
-
-from common import plt, save, dump  # noqa: F401
+from common import dump, plt, save  # noqa: F401
 from icsim import anr, chain, data, sti
 
 FS = 32000
@@ -57,8 +56,13 @@ def part_a():
             d, _, _ = sti.sti_direct(x, FS)
             i, _ = sti.sti_indirect(s_lev, n_lev - shift)
             rows.append({"snr_shift_db": shift, "seed": seed, "direct": d, "indirect": i, "diff": d - i})
-    return {"operating_point_sti": op["sti"], "speech_ear_dba": op["speech_ear_dba"], "rows": rows,
-            "s_lev": s_lev, "n_lev": n_lev}
+    return {
+        "operating_point_sti": op["sti"],
+        "speech_ear_dba": op["speech_ear_dba"],
+        "rows": rows,
+        "s_lev": s_lev,
+        "n_lev": n_lev,
+    }
 
 
 def part_b(a):
@@ -93,8 +97,8 @@ def part_b(a):
     x_on = r["e"]
     out["on"] = sti.sti_direct(x_on, FS, skip_s=2.0)[0]
     # what the anti-noise did to the speech: compare the speech band levels with/without
-    lev_off = sti.band_levels(x_off[2 * FS:], FS)
-    lev_on = sti.band_levels(x_on[2 * FS:], FS)
+    lev_off = sti.band_levels(x_off[2 * FS :], FS)
+    lev_on = sti.band_levels(x_on[2 * FS :], FS)
     out["band_level_change_db"] = lev_on - lev_off
     # indirect prediction for both cases (tones as noise power)
     n_off = chain.db_sum(ear, n_tx)
@@ -139,9 +143,15 @@ def main():
     axs[1].set_title("Tonal ANR in the loop, measured by STIPA", fontsize=9)
     res["fig"] = save(fig, "s3_stipa.png")
     dump("s3_stipa.json", res)
-    print("A max|diff| %.3f mean %.3f; op STI %.3f" % (res["max_abs_diff"], res["mean_diff"], a["operating_point_sti"]))
+    print(
+        "A max|diff| %.3f mean %.3f; op STI %.3f"
+        % (res["max_abs_diff"], res["mean_diff"], a["operating_point_sti"])
+    )
     for r in a["rows"]:
-        print("  shift %+5.1f seed %d direct %.3f indirect %.3f" % (r["snr_shift_db"], r["seed"], r["direct"], r["indirect"]))
+        print(
+            "  shift %+5.1f seed %d direct %.3f indirect %.3f"
+            % (r["snr_shift_db"], r["seed"], r["direct"], r["indirect"])
+        )
     print("B", {k: (np.round(v, 3) if not isinstance(v, list) else v) for k, v in b.items()})
 
 

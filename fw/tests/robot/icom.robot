@@ -89,7 +89,7 @@ IT05 ANR Converges On Target
     ${us}=    Evaluate    int($cyc) / 600.0
     Log To Console    \nANR attenuation ${att} x0.1 dB; worst icom_box_tick ${cyc} cycles (${us} us at 600 MHz)
     Should Be True    int($att) >= 300
-    Should Be True    $us < 1000.0
+    Should Be True    $us < 500.0    # CB-05: half of the 1 ms frame
     State Should Be    ${ST_NORMAL}
 
 IT06 Wrong S_hat Is Caught
