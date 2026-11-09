@@ -1,0 +1,7 @@
+# MISRA C:2012 deviations for lib/icom (cppcheck suppression list).
+# Every entry is explained in fw/docs/misra.md.
+# D1 - Rule 2.5 (advisory): unused macro. icom.h is the public interface and
+#      the bus protocol definition; its channel indices and CCU mode codes are
+#      used by the application, the tests and the CCU model, which are outside
+#      the analysed file set.
+misra-c2012-2.5:*lib/icom/include/icom/icom.h
