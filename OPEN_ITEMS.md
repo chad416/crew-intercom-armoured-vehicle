@@ -18,8 +18,8 @@ would close it.
 | H10 | STI with listeners | validation (DOSSIER §13.4) | MRT (ANSI S3.2) with crews in a noise chamber at the recorded vehicle spectrum |
 | H11 | CCU hardware: radio interfaces, 28 V, enclosure (its core logic is built and tested) | SYS-3.3.x on hardware | CCU board design and integration with real radios (integration points IP4/IP5) |
 
-## Needs the owner's go (not hardware)
+## Closed non-hardware items
 
-| # | Item | Why it is open | What closes it |
-|---|---|---|---|
-| G1 | Two early public commits still contain a company name (in a progress note) and a helmet product designation | Rewriting public history needs a force-push, which the automation's safety policy leaves to the repository owner. The current files are clean. | A clean rewritten history is ready on the local branch `clean-history`, with the same final tree. To replace the public history: `git push --force-with-lease origin clean-history:main` |
+| # | Item | Closed |
+|---|---|---|
+| G1 | Two early public commits contained a company name (in a progress note) and a helmet product designation | 10 Nov 2026: the public history was replaced by the cleaned history with an identical final tree |
